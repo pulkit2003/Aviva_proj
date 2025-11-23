@@ -18,6 +18,8 @@ pipeline {
             steps {
                 dir('terraform') {
                     sh '''
+                        set -e
+
                         echo "Running terraform init..."
                         terraform init
 
@@ -33,8 +35,9 @@ pipeline {
 
         stage('3. EC2 -> S3 File Upload') {
             steps {
-                sshagent (credentials: ['ec2-ssh']) {   // <-- your SSH cred ID
+                sshagent (credentials: ['ec2-ssh']) {   // Jenkins SSH credential ID
                     sh '''
+                        set -e
                         cd terraform
 
                         # Read Terraform outputs
@@ -44,13 +47,13 @@ pipeline {
                         echo "Using EC2_IP=$EC2_IP"
                         echo "Using BUCKET_NAME=$BUCKET_NAME"
 
-                        # Create file on EC2
-                        ssh -o StrictHostKeyChecking=no ubuntu@$EC2_IP \
-                            "echo 'Hello from Jenkins via EC2!' > /home/ubuntu/demo.txt"
-
-                        # Upload file from EC2 to S3
-                        ssh -o StrictHostKeyChecking=no ubuntu@$EC2_IP \
-                            "aws s3 cp /home/ubuntu/demo.txt s3://$BUCKET_NAME/demo.txt"
+                        # SSH into EC2: create file, install awscli, upload to S3
+                        ssh -o StrictHostKeyChecking=no ubuntu@$EC2_IP <<EOF
+echo 'Hello from Jenkins via EC2!' > /home/ubuntu/demo.txt
+sudo apt-get update -y
+sudo apt-get install -y awscli
+aws s3 cp /home/ubuntu/demo.txt s3://$BUCKET_NAME/demo.txt
+EOF
                     '''
                 }
             }
