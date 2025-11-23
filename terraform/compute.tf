@@ -1,5 +1,4 @@
 # IAM role so EC2 can upload to S3 without access keys
-
 data "aws_iam_policy_document" "ec2_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -12,15 +11,13 @@ data "aws_iam_policy_document" "ec2_assume_role" {
 }
 
 resource "aws_iam_role" "ec2_role_v2" {
-  name               = "${var.project_name}-ec2-role"
+  name               = "${var.project_name}-ec2-role-v2"    # <-- changed
   assume_role_policy = data.aws_iam_policy_document.ec2_assume_role.json
 }
 
 data "aws_iam_policy_document" "ec2_s3_policy" {
   statement {
-    actions = [
-      "s3:PutObject",
-    ]
+    actions = ["s3:PutObject"]
 
     resources = [
       "arn:aws:s3:::${aws_s3_bucket.storage.bucket}/*"
@@ -29,18 +26,18 @@ data "aws_iam_policy_document" "ec2_s3_policy" {
 }
 
 resource "aws_iam_policy" "ec2_s3_policy" {
-  name   = "${var.project_name}-ec2-s3-policy_v2"
+  name   = "${var.project_name}-ec2-s3-policy-v2"           # <-- changed
   policy = data.aws_iam_policy_document.ec2_s3_policy.json
 }
 
 resource "aws_iam_role_policy_attachment" "ec2_s3_attach" {
-  role       = aws_iam_role.ec2_role.name
+  role       = aws_iam_role.ec2_role_v2.name                # <-- fixed reference
   policy_arn = aws_iam_policy.ec2_s3_policy.arn
 }
 
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
-  name = "${var.project_name}-ec2-instance-profile_v2"
-  role = aws_iam_role.ec2_role.name
+  name = "${var.project_name}-ec2-instance-profile-v2"      # <-- changed
+  role = aws_iam_role.ec2_role_v2.name                      # <-- fixed reference
 }
 
 # Ubuntu 22.04 AMI (latest)
