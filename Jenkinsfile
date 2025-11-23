@@ -6,6 +6,7 @@ pipeline {
     }
 
     stages {
+
         stage('1. Checkout Code') {
             steps {
                 echo "Pulling code from GitHub..."
@@ -32,22 +33,24 @@ pipeline {
 
         stage('3. EC2 -> S3 File Upload') {
             steps {
-                sshagent (credentials: ['ec2-ssh']) {
+                sshagent (credentials: ['ec2-ssh']) {   // <-- your SSH cred ID
                     sh '''
                         cd terraform
 
-                        # Read Terraform outputs dynamically
+                        # Read Terraform outputs
                         EC2_IP=$(terraform output -raw ec2_public_ip)
                         BUCKET_NAME=$(terraform output -raw bucket_name)
 
                         echo "Using EC2_IP=$EC2_IP"
                         echo "Using BUCKET_NAME=$BUCKET_NAME"
 
-                        # Create text file on EC2
-                        ssh -o StrictHostKeyChecking=no ubuntu@$EC2_IP "echo 'Hello from Jenkins via EC2!' > /home/ubuntu/demo.txt"
+                        # Create file on EC2
+                        ssh -o StrictHostKeyChecking=no ubuntu@$EC2_IP \
+                            "echo 'Hello from Jenkins via EC2!' > /home/ubuntu/demo.txt"
 
-                        # Upload txt file from EC2 to S3
-                        ssh -o StrictHostKeyChecking=no ubuntu@$EC2_IP "aws s3 cp /home/ubuntu/demo.txt s3://$BUCKET_NAME/demo.txt"
+                        # Upload file from EC2 to S3
+                        ssh -o StrictHostKeyChecking=no ubuntu@$EC2_IP \
+                            "aws s3 cp /home/ubuntu/demo.txt s3://$BUCKET_NAME/demo.txt"
                     '''
                 }
             }
@@ -67,10 +70,10 @@ pipeline {
 
     post {
         success {
-            echo "🎉 Pipeline completed – EC2 and S3 setup done, file uploaded!"
+            echo "🎉 Pipeline completed – infra up & file uploaded to S3!"
         }
         failure {
-            echo "❌ Pipeline failed – check logs."
+            echo "❌ Pipeline failed – check the stage logs above."
         }
     }
 }
