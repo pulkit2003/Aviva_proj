@@ -6,7 +6,6 @@ pipeline {
     }
 
     stages {
-
         stage('1. Checkout Code') {
             steps {
                 echo "Pulling code from GitHub..."
@@ -58,7 +57,7 @@ pipeline {
             steps {
                 dir('terraform') {
                     sh '''
-                        echo "🌍 Terraform Outputs:"
+                        echo "Terraform Outputs:"
                         terraform output
                     '''
                 }
