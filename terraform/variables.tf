@@ -7,5 +7,5 @@ variable "region" {
 variable "project_name" {
   description = "Project name prefix for tagging and naming resources"
   type        = string
-  default     = "ec2-s3-demo_v2"
+  default     = "ec2-s3-demo-v2"
 }
