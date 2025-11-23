@@ -49,7 +49,7 @@ pipeline {
 
                         # SSH into EC2: create file, install awscli, upload to S3
                         ssh -o StrictHostKeyChecking=no ubuntu@$EC2_IP <<EOF
-echo 'Hello from Jenkins via EC2!' > /home/ubuntu/demo.txt
+echo 'Hello Pulkit your pipeline has worked' > /home/ubuntu/demo.txt
 sudo apt-get update -y
 sudo apt-get install -y awscli
 aws s3 cp /home/ubuntu/demo.txt s3://$BUCKET_NAME/demo.txt
