@@ -10,15 +10,17 @@ data "aws_iam_policy_document" "ec2_assume_role" {
   }
 }
 
-# Single logical name: ec2_role
+# IAM Role for EC2
 resource "aws_iam_role" "ec2_role" {
   name               = "${var.project_name}-ec2-role-v4"
   assume_role_policy = data.aws_iam_policy_document.ec2_assume_role.json
 }
 
+# IAM Policy allowing PutObject to S3 bucket
 data "aws_iam_policy_document" "ec2_s3_policy" {
   statement {
     actions = ["s3:PutObject"]
+
     resources = [
       "arn:aws:s3:::${aws_s3_bucket.storage.bucket}/*"
     ]
@@ -30,11 +32,13 @@ resource "aws_iam_policy" "ec2_s3_policy" {
   policy = data.aws_iam_policy_document.ec2_s3_policy.json
 }
 
+# Attach Policy to EC2 Role
 resource "aws_iam_role_policy_attachment" "ec2_s3_attach" {
   role       = aws_iam_role.ec2_role.name
   policy_arn = aws_iam_policy.ec2_s3_policy.arn
 }
 
+# Instance Profile for EC2 to use Role
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
   name = "${var.project_name}-ec2-instance-profile-v4"
   role = aws_iam_role.ec2_role.name
@@ -68,10 +72,10 @@ resource "aws_instance" "app" {
 
   iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
 
+  # Minimal boot script (awscli installation handled by Jenkins)
   user_data = <<-EOF
               #!/bin/bash
               apt-get update -y
-              apt-get install -y awscli
               EOF
 
   tags = {
