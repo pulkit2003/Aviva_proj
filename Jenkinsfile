@@ -7,72 +7,74 @@ pipeline {
 
     stages {
 
-        stage('1. Checkout Code') {
+        stage('1️⃣ Checkout Code') {
             steps {
-                echo "Pulling code from GitHub..."
+                echo "📦 Fetching source code..."
                 checkout scm
             }
         }
 
-        stage('2. Terraform Init & Apply') {
+        stage('2️⃣ Deploy Infra (Terraform)') {
             steps {
                 dir('terraform') {
                     sh '''
-                        echo "Running terraform init..."
-                        terraform init
+                        echo "🚀 Initializing Terraform..."
+                        terraform init -input=false > /dev/null
 
-                        echo "Validating configuration..."
-                        terraform validate
+                        echo "🔍 Validating Terraform..."
+                        terraform validate > /dev/null
 
-                        echo "Applying infrastructure..."
-                        terraform apply -auto-approve
+                        echo "🏗️  Applying Terraform (quiet mode)..."
+                        terraform apply -auto-approve -input=false -compact-warnings
                     '''
                 }
             }
         }
 
-        stage('3. EC2 -> S3 File Upload') {
+        stage('3️⃣ Upload File to S3 via EC2') {
             steps {
                 sshagent (credentials: ['ec2-ssh']) {
                     sh '''
                         set -e
                         cd terraform
 
-                        # Read Terraform outputs
                         EC2_IP=$(terraform output -raw ec2_public_ip)
-                        BUCKET_NAME=$(terraform output -raw bucket_name)
+                        BUCKET=$(terraform output -raw bucket_name)
 
-                        echo "Using EC2_IP=$EC2_IP"
-                        echo "Using BUCKET_NAME=$BUCKET_NAME"
+                        echo "📌 EC2: $EC2_IP | S3 Bucket: $BUCKET"
 
-                        # 1) Make sure AWS CLI is installed on the app EC2
+                        echo "🔐 Installing AWS CLI (if missing)..."
                         ssh -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
                             if ! command -v aws >/dev/null 2>&1; then
-                                echo "AWS CLI not found – installing via snap..."
-                                sudo snap install aws-cli --classic
+                                sudo snap install aws-cli --classic > /dev/null
+                                echo "✔ AWS CLI installed"
                             else
-                                echo "AWS CLI already installed."
+                                echo "✔ AWS CLI already present"
                             fi
                         '
 
-                        # 2) Create the demo file on EC2
+                        echo "📝 Creating demo file..."
                         ssh -o StrictHostKeyChecking=no ubuntu@$EC2_IP \
-                            "echo 'Hello from Jenkins via EC2!' > /home/ubuntu/demo.txt"
+                            "echo 'Hello from Jenkins 🚀' > ~/demo.txt"
 
-                        # 3) Upload the file from EC2 to S3
+                        echo "☁ Uploading to S3..."
                         ssh -o StrictHostKeyChecking=no ubuntu@$EC2_IP \
-                            "aws s3 cp /home/ubuntu/demo.txt s3://$BUCKET_NAME/demo.txt"
+                            "aws s3 cp ~/demo.txt s3://$BUCKET/demo.txt > /dev/null"
+
+                        echo "🎉 Upload successful! File: s3://$BUCKET/demo.txt"
                     '''
                 }
             }
         }
 
-        stage('4. Show Outputs') {
+        stage('4️⃣ Output Summary') {
             steps {
                 dir('terraform') {
                     sh '''
-                        echo "Terraform Outputs:"
+                        echo ""
+                        echo "📢 Final Outputs:"
                         terraform output
+                        echo ""
                     '''
                 }
             }
@@ -81,10 +83,10 @@ pipeline {
 
     post {
         success {
-            echo "🎉 Pipeline completed – infra up & file uploaded to S3!"
+            echo "✅ Pipeline Completed Successfully!"
         }
         failure {
-            echo "❌ Pipeline failed – check the stage logs above."
+            echo "❌ Pipeline Failed — Check Logs."
         }
     }
 }
