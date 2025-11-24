@@ -12,7 +12,7 @@ data "aws_iam_policy_document" "ec2_assume_role" {
 
 # IAM Role for EC2
 resource "aws_iam_role" "ec2_role" {
-  name               = "${var.project_name}-ec2-role-v4"
+  name               = "${var.project_name}-ec2-role-v5"
   assume_role_policy = data.aws_iam_policy_document.ec2_assume_role.json
 }
 
@@ -28,7 +28,7 @@ data "aws_iam_policy_document" "ec2_s3_policy" {
 }
 
 resource "aws_iam_policy" "ec2_s3_policy" {
-  name   = "${var.project_name}-ec2-s3-policy-v4"
+  name   = "${var.project_name}-ec2-s3-policy-v5"
   policy = data.aws_iam_policy_document.ec2_s3_policy.json
 }
 
@@ -40,7 +40,7 @@ resource "aws_iam_role_policy_attachment" "ec2_s3_attach" {
 
 # Instance Profile for EC2 to use Role
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
-  name = "${var.project_name}-ec2-instance-profile-v4"
+  name = "${var.project_name}-ec2-instance-profile-v5"
   role = aws_iam_role.ec2_role.name
 }
 
