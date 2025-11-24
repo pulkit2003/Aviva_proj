@@ -12,7 +12,7 @@ data "aws_iam_policy_document" "ec2_assume_role" {
 
 # Single logical name: ec2_role
 resource "aws_iam_role" "ec2_role" {
-  name               = "${var.project_name}-ec2-role-v3"
+  name               = "${var.project_name}-ec2-role-v4"
   assume_role_policy = data.aws_iam_policy_document.ec2_assume_role.json
 }
 
@@ -26,7 +26,7 @@ data "aws_iam_policy_document" "ec2_s3_policy" {
 }
 
 resource "aws_iam_policy" "ec2_s3_policy" {
-  name   = "${var.project_name}-ec2-s3-policy-v3"
+  name   = "${var.project_name}-ec2-s3-policy-v4"
   policy = data.aws_iam_policy_document.ec2_s3_policy.json
 }
 
@@ -36,7 +36,7 @@ resource "aws_iam_role_policy_attachment" "ec2_s3_attach" {
 }
 
 resource "aws_iam_instance_profile" "ec2_instance_profile" {
-  name = "${var.project_name}-ec2-instance-profile-v3"
+  name = "${var.project_name}-ec2-instance-profile-v4"
   role = aws_iam_role.ec2_role.name
 }
 
